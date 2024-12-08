@@ -1,8 +1,13 @@
 #include "rclcpp/rclcpp.hpp"
+#include"iostream"
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2/LinearMath/Quaternion.h"
 #include "geometry_msgs/msg/pose.hpp"
 #include "turtlesim/msg/pose.hpp"
+#include <memory>
+#include <rclcpp/utilities.hpp>
+#include <string>
+#include<thread>
 
 class node: public rclcpp::Node
 {
@@ -39,29 +44,36 @@ public:
     {
         RCLCPP_INFO(this->get_logger(), "Goodbye, world");
     }
+    
 };
 
-class ROS_EVENT_LOOP
-{
-public:
-    ROS_EVENT_LOOP(int argc, char *argv[],std::string st)
-    {
-        rclcpp::init(argc, argv);
-        rclcpp::spin(std::make_shared<node>(st));
-    }
-    ~ROS_EVENT_LOOP()
-    {
-        rclcpp::shutdown();
-    }
-};
 
 int main(int argc, char *argv[])
 {
     if (argc != 2 )
     {
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "usage: tf turtle_name");
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "usage: tf turtle_count");
         return 1;
     }
-    ROS_EVENT_LOOP(argc, argv, argv[1]);
+    rclcpp::init(argc,argv);
+    int n=atoi(argv[1]);
+    std::string turtle_name[10];
+    for(int i=0;i<n;i++)
+    {
+    turtle_name[i]="turtle"+std::to_string(i+1);
+    }
+    
+    rclcpp::executors::MultiThreadedExecutor executor;
+    std::shared_ptr<node> nodearr[10];
+    for(int i=0;i<n;i++)
+    {
+        nodearr[i]=std::make_shared<node>(turtle_name[i]);
+        executor.add_node(nodearr[i]);
+    }
+    std::thread executor_thread([&executor]() {
+        executor.spin();
+    });
+    executor_thread.join();
+    rclcpp::shutdown();
     return 0;
 }

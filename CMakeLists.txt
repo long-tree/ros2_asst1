@@ -41,7 +41,13 @@ target_include_directories(follow PUBLIC
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(follow rclcpp tf2_ros tf2_geometry_msgs geometry_msgs turtlesim)
 
-
+add_executable(follow_node src/follow_node.cpp)
+ament_target_dependencies(follow_node rclcpp geometry_msgs turtlesim)
+add_executable(follow1 src/follow_turtle1.cpp)
+target_include_directories(follow1 PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(follow1 rclcpp tf2_ros tf2_geometry_msgs geometry_msgs turtlesim)
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -55,7 +61,7 @@ if(BUILD_TESTING)
 endif()
 
 install(TARGETS
-  MYNODE spawn tf follow
+  MYNODE spawn tf follow follow_node follow1
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

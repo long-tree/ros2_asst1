@@ -1,0 +1,53 @@
+任务1
+先topic  info /turtlesim 一下找到
+  Subscribers:
+    /parameter_events: rcl_interfaces/msg/ParameterEvent
+    /turtle1/cmd_vel: geometry_msgs/msg/Twist
+    找到消息接口然后ros2 interface show  geometry_msgs/msg/Twist
+Vector3  linear
+        float64 x
+        float64 y
+        float64 z
+Vector3  angular
+        float64 x
+        float64 y
+        float64 z
+画园应该是一个w和v=wr
+令w=1.0 r=1 乌龟头朝前，所以修改linear x和angular z
+ros2 topic pub /turtle1/cmd_vel  geometry_msgs/msg/Twist "{linear:{x: 1.0,y: 0.0,z: 0.0},angular:{x: 0.0,y: 0.0,z: 1.0}}"
+(冒号后有空格)
+任务2
+ request->x = atof(argv[1]);
+    request->y = atof(argv[2]);
+    request->theta = atof(argv[3]);看出输入格式
+运行后输入ros2 run hello_ros spawn 1 1 0 生产海龟
+海龟跟随应该是写一个新的节点，需要subcribe第一支海龟的pose和向cmdvelpublish第二只海龟的速度
+详见follow_node
+实现思路：因为要知道两个海归的位置，所以我创建了两个subscripition，并将一个海龟的位置用lamdba复制给成员
+变量供另一个使用，然后通过距离error和角度error调整乌龟的速度，通过前往turtle1的坐标完成跟随
+一开始角度是两个theta相减，导致转头过猛，后来用了tan2来得出角度
+使用了PID控制法中的k_P,距离越远速度越大，k是比例系数（应该是，PID现在还不懂）
+目前还有一个问题是最后阶段左右摇摆，不过turtle1动起来的话不明显
+任务3
+  我将最后一个输入改成了乌龟数量，然后最初是直接用for创建循环处理不同乌龟，然后不行
+  然后想到用spin会阻塞线程的运行，改用多线程
+  for(int i=0;i<n;i++)
+    {std::thread t(ROS_EVENT_LOOP(argc, argv, turtle_name[i]));
+      t.detach();
+    }
+    然后还是不行（？），需要按cltr+c才能运行到下一个spin，问了chatgpt后使用了rclcpp自带的多线程，
+    然后ROS_EVENT_LOOP就没用了给删了
+    最终可以同时broadcast了
+任务4
+由于与任务5使用一个源文件，所以新建了一个follow_turtle1.cpp 可执行文件名为follow1
+使用任务3的方法，同时多个spin，打开tf和follow1节点，经测试可跟随
+任务5
+由于任务5需要相对位置不变，考虑使乌龟的agular和v一致，使用订阅乌龟1的pose的方法，同时把原有的跟随删除，由于改动较多，又重新写一份
+仍然使用多线程解决多只乌龟的问题，然后就只能向前跟随，发现pose无符号，然后又订阅了cmd_vel的符号
+本次作业纯手打：），只有多线程部分用了一点ai
+使用方法在RCLCPP_INFO里已经说了
+
+
+
+
+
